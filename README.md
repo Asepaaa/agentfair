@@ -2,6 +2,12 @@
 
 **Fair drops and daily check-ins, gated by Agent ID.**
 
+## Live
+
+- App: https://asepaaa.github.io/agentfair/
+- Contract (BNB Chain mainnet): [`0xB4e3ac1647f17D3676B98a61159EeA71749B8E37`](https://bscscan.com/address/0xB4e3ac1647f17D3676B98a61159EeA71749B8E37) — verified on BscScan and on Sourcify (exact match)
+- Built for the Binance Wallet Agent ID Hackathon
+
 In the Agent ID ecosystem, every project hand-rolls the same pattern —
 "Agent ID holders get exactly one free share" — with its own gating, its
 own one-per-person accounting, and its own claim flow. AgentFair turns that
