@@ -1,0 +1,20 @@
+No files changed, compilation skipped
+
+Ran 14 tests for test/AgentFair.t.sol:AgentFairTest
+[PASS] testCheckInTwiceInOneDayReverts() (gas: 150819)
+[PASS] testClaimAfterDeadlineReverts() (gas: 323104)
+[PASS] testClaimsStopAtMaxClaims() (gas: 564595)
+[PASS] testCreateDropPullsExactTotal() (gas: 332744)
+[PASS] testCreatorCannotWithdrawBeforeDeadline() (gas: 322638)
+[PASS] testCreatorWithdrawsExactRemainderAfterDeadline() (gas: 805066)
+[PASS] testHolderClaimsOnceAndSecondClaimReverts() (gas: 503041)
+[PASS] testIdentityKeyIsHandleHash() (gas: 70158)
+[PASS] testNonCreatorCannotWithdraw() (gas: 323336)
+[PASS] testNonHolderCannotCheckIn() (gas: 38355)
+[PASS] testNonHolderCannotClaim() (gas: 332925)
+[PASS] testStreakIncrementsOnConsecutiveDays() (gas: 226217)
+[PASS] testStreakResetsAfterGap() (gas: 213287)
+[PASS] testTwoDifferentHoldersCanEachClaim() (gas: 552070)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 8.66ms (6.87ms CPU time)
+
+Ran 1 test suite in 19.25ms (8.66ms CPU time): 14 tests passed, 0 failed, 0 skipped (14 total tests)
