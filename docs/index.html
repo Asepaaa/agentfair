@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentFair — Fair drops &amp; daily check-ins, gated by Agent ID</title>
+<meta name="description" content="AgentFair: anyone can open a fully-funded ERC-20 drop; every Agent ID holder claims exactly one share, free apart from network gas. Plus a daily check-in streak for Agent ID holders. No backend, no accounts — your wallet, your confirmation, on BNB Chain.">
+<style>
+  :root {
+    --bg: #0b0e13;
+    --panel: #141922;
+    --panel-2: #1a212e;
+    --line: #2a3342;
+    --text: #e8edf4;
+    --muted: #9aa7b8;
+    --accent: #f0b90b; /* BNB-ish yellow, used sparingly */
+    --accent-text: #1a1405;
+    --ok: #3fb96f;
+    --warn: #e0a63f;
+    --bad: #e05d5d;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 48px; }
+  header.site {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    justify-content: space-between; padding: 8px 0 18px;
+    border-bottom: 1px solid var(--line); margin-bottom: 20px;
+  }
+  .brand h1 { font-size: 26px; margin: 0; letter-spacing: .2px; }
+  .brand p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  .wallet-box { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .addr-chip {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px; background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 10px; word-break: break-all;
+  }
+  .handle-line { font-size: 14px; color: var(--muted); }
+  .handle-line strong { color: var(--text); }
+  button {
+    font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--text); padding: 9px 16px;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:not(:disabled):hover { filter: brightness(1.12); }
+  section.panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 18px;
+  }
+  section.panel > h2 { margin: 0 0 4px; font-size: 19px; }
+  section.panel > .sub { color: var(--muted); font-size: 14px; margin: 0 0 14px; }
+  .row-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .banner {
+    border-radius: var(--radius); padding: 14px 16px; margin-bottom: 18px; font-size: 15px;
+    border: 1px solid var(--warn); background: rgba(224,166,63,.08);
+  }
+  .banner.error { border-color: var(--bad); background: rgba(224,93,93,.08); }
+  .banner[hidden] { display: none; }
+  .msg { font-size: 14px; min-height: 1.2em; margin-top: 10px; word-break: break-word; }
+  .msg.ok { color: var(--ok); }
+  .msg.err { color: var(--bad); }
+  .msg.info { color: var(--muted); }
+  .drop {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel-2); padding: 14px 16px; margin-bottom: 12px;
+  }
+  .drop-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .drop-title { font-weight: 600; font-size: 17px; }
+  .badge {
+    font-size: 12px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+    border-radius: 999px; padding: 3px 9px; border: 1px solid var(--line);
+  }
+  .badge.open { color: var(--ok); border-color: var(--ok); }
+  .badge.expired { color: var(--muted); }
+  .badge.exhausted { color: var(--warn); border-color: var(--warn); }
+  .badge.withdrawn { color: var(--muted); }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 16px; margin: 10px 0; font-size: 14px; }
+  .kv dt { color: var(--muted); margin: 0; }
+  .kv dd { margin: 0; font-weight: 500; word-break: break-word; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+  .progress { height: 8px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 6px 0 2px; }
+  .progress > div { height: 100%; background: var(--accent); }
+  .drop-actions { margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .note { font-size: 13px; color: var(--muted); }
+  form .field { margin-bottom: 14px; }
+  form label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+  form .hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  input[type="text"], input[type="number"] {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  .step {
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-top: 12px;
+    background: var(--panel-2);
+  }
+  .step h3 { margin: 0 0 6px; font-size: 15px; }
+  .step p { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+  .step p strong { color: var(--text); }
+  .streak-big { font-size: 30px; font-weight: 700; }
+  footer.site { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 16px; color: var(--muted); font-size: 13px; }
+  footer.site p { margin: 4px 0; }
+  .empty { color: var(--muted); font-size: 15px; padding: 8px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site">
+    <div class="brand">
+      <h1>AgentFair</h1>
+      <p>Fair drops &amp; daily check-ins, gated by Agent ID — on BNB Chain.</p>
+    </div>
+    <div class="wallet-box">
+      <button id="btnConnect" class="primary" type="button">Connect Wallet</button>
+      <div id="accountChip" class="addr-chip" hidden></div>
+      <div id="handleLine" class="handle-line" hidden></div>
+    </div>
+  </header>
+
+  <div id="deployBanner" class="banner" hidden>
+    <strong>AgentFair is not deployed yet.</strong>
+    The contract address in this page's configuration is still a placeholder,
+    so the drop board and check-in are read-only previews of the interface.
+    Once the contract is deployed and its source verified, this page will point
+    at the live contract and every feature below will work against it.
+  </div>
+
+  <div id="globalMsg" class="banner error" hidden></div>
+
+  <section class="panel" id="howPanel">
+    <h2>How it works</h2>
+    <p class="sub">
+      Anyone can open a <strong>drop</strong>: they deposit ERC-20 tokens up front
+      (amount per claim × number of claims), and every Agent ID holder can then claim
+      <strong>exactly one share</strong> — one per Agent ID identity, not per wallet.
+      Claims are <strong>free apart from the network gas</strong> you pay for your own
+      transaction; claimers are never asked to approve anything. After a drop's
+      deadline, its creator can withdraw whatever was not claimed. AgentFair charges
+      no fees and takes no cut.
+    </p>
+    <p class="sub">
+      A drop distributes whatever token its creator deposited. That token may have a
+      market, or none at all, and AgentFair makes no statement about its value.
+      Nothing here is a promise of returns.
+    </p>
+    <p class="sub">
+      This page has <strong>no backend and no accounts</strong>. It connects directly
+      to your own wallet through your browser's standard wallet provider, and every
+      transaction is shown to you in your wallet for your own confirmation before
+      anything is signed. There is no QR-code or pairing-code login, and nothing is
+      stored on any server.
+    </p>
+  </section>
+
+  <section class="panel" id="boardPanel">
+    <div class="row-head">
+      <h2>Drop board</h2>
+      <button id="btnRefresh" type="button">Refresh</button>
+    </div>
+    <p class="sub">All drops on the AgentFair contract. Reading the board needs no wallet.</p>
+    <div id="boardList"><p class="empty">Loading drops…</p></div>
+    <div id="boardMsg" class="msg info" role="status"></div>
+  </section>
+
+  <section class="panel" id="checkinPanel">
+    <h2>Daily check-in</h2>
+    <p class="sub">
+      Agent ID holders can check in once per UTC day and build a streak.
+      Check-ins move no assets — they only record that your Agent ID showed up today.
+    </p>
+    <div id="checkinBody">
+      <p class="empty">Connect your wallet to see your check-in status.</p>
+    </div>
+    <div id="checkinMsg" class="msg info" role="status"></div>
+  </section>
+
+  <section class="panel" id="createPanel">
+    <h2>Create a drop</h2>
+    <p class="sub">
+      Deposit tokens so Agent ID holders can each claim one share. Creating a drop
+      takes <strong>two transactions, both confirmed by you in your wallet</strong>:
+      first an ERC-20 <em>approve</em> for the exact total, then the
+      <em>createDrop</em> call that pulls exactly that total into the contract.
+      Nothing else is ever approved, and the approval amount is never open-ended.
+    </p>
+    <form id="createForm" autocomplete="off">
+      <div class="field">
+        <label for="fToken">Token contract address (ERC-20 on BNB Chain)</label>
+        <input type="text" id="fToken" placeholder="0x…" spellcheck="false">
+        <div class="hint" id="tokenMeta">Paste a token address to load its symbol and decimals.</div>
+      </div>
+      <div class="field">
+        <label for="fAmount">Amount per claim</label>
+        <input type="number" id="fAmount" min="0" step="any" placeholder="e.g. 100">
+        <div class="hint">What each Agent ID holder receives for their one claim, in whole tokens.</div>
+      </div>
+      <div class="field">
+        <label for="fMaxClaims">Maximum number of claims</label>
+        <input type="number" id="fMaxClaims" min="1" step="1" placeholder="e.g. 100">
+        <div class="hint">One claim per Agent ID identity, so this is also the maximum number of holders who can claim.</div>
+      </div>
+      <div class="field">
+        <label for="fDays">Duration (days)</label>
+        <input type="number" id="fDays" min="1" step="1" value="7">
+        <div class="hint">Claims close at the deadline. After it passes, you can withdraw the unclaimed remainder below.</div>
+      </div>
+    </form>
+
+    <div class="step" id="stepApprove">
+      <h3>Step 1 of 2 — Approve the exact deposit</h3>
+      <p id="approveText">Fill in the form above. This step will ask your wallet to approve the AgentFair contract to pull <strong>the exact total</strong> (amount per claim × max claims) of your token — no more.</p>
+      <button id="btnApprove" type="button" disabled>Approve</button>
+    </div>
+    <div class="step" id="stepCreate">
+      <h3>Step 2 of 2 — Create the drop</h3>
+      <p id="createText">After the approval is confirmed, this step calls <span class="mono">createDrop</span> and the contract pulls exactly the approved total. The drop is fully funded from that moment.</p>
+      <button id="btnCreate" type="button" class="primary" disabled>Create drop</button>
+    </div>
+    <div id="createMsg" class="msg info" role="status"></div>
+  </section>
+
+  <section class="panel" id="myDropsPanel">
+    <h2>My drops</h2>
+    <p class="sub">Drops created by the connected wallet. Once a drop's deadline has passed, you can withdraw its unclaimed remainder — it returns to you, and only you can call it.</p>
+    <div id="myDropsList"><p class="empty">Connect your wallet to see drops you created.</p></div>
+    <div id="myDropsMsg" class="msg info" role="status"></div>
+  </section>
+
+  <footer class="site">
+    <p>
+      AgentFair contract: <span id="contractRef" class="mono">to be added after deployment</span>
+      · Agent ID registry: <a href="https://bscscan.com/address/0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F" target="_blank" rel="noopener">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</a> (SPACE ID Agent ID, BNB Chain)
+    </p>
+    <p>Claims are free apart from network gas. AgentFair charges no fees, takes no cut, and makes no promise about the value of any dropped token.</p>
+    <p>AgentFair is open source under the <a href="https://opensource.org/license/mit" target="_blank" rel="noopener">MIT License</a>. This page is a static file with no backend; it talks to BNB Chain and to your own wallet only.</p>
+  </footer>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
